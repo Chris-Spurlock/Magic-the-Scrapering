@@ -1,3 +1,6 @@
+# Under Construction
+# Add commentary
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -38,12 +41,6 @@ for container in cards_tr:
     
     cmc = container.find('span', class_="convertedManaCost").text
     cmcs.append(cmc)
-    
-# print(card_names)
-# print(card_types)
-# print(rules_texts)
-# print(mana_costs)
-# print(cmcs)
 
 cards = pd.DataFrame({
     "Name": card_names,
