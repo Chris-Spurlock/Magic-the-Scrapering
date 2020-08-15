@@ -19,27 +19,52 @@ rules_texts = []
 mana_costs = []
 cmcs = []
 
+mana_symbols_dict = {
+    'White': 'W',
+    'Blue': 'U',
+    'Black': 'B',
+    'Red': 'R',
+    'Green': 'G',
+    'Phyrexian White': 'W/P',
+    'Phyrexian Blue': 'U/P',
+    'Phyrexian Black': 'B/P',
+    'Phyrexian Red': 'R/P',
+    'Phyrexian Green': 'G/P',
+    'Colorless': 'C',
+    'Variable Colorless': 'X'
+    }
+
 cards_tr = html.find_all('tr', class_="cardItem")
 
-for container in cards_tr:
-    card_name = container.find('span', class_="cardTitle").text.strip("\n")
+for card in cards_tr:
+    card_name = card.find('span', class_="cardTitle").text.strip("\n")
     card_names.append(card_name)
     
-    card_type = container.find('span', class_="typeLine").text
+    card_type = card.find('span', class_="typeLine").text
     card_type = card_type.replace("\r\n","")
     card_type = " ".join(card_type.split())
     card_types.append(card_type)
     
-    rules_text = str(container.find('div', class_="rulesText").find_all('p'))
+    rules_text_symbols = []
+    rules_text = str(card.find('div', class_="rulesText").find_all('p'))
+    for img in card.find('div', class_="rulesText").find_all('img', alt=True):
+        symbol = img.get('alt')
+        rules_text_symbols.append(mana_symbols_dict.get(symbol,symbol))
+    for symbol in rules_text_symbols:
+        rules_text = re.sub('<img.*?/>',symbol,rules_text,1)
+    
     rules_text = re.sub('<p>|</p>,|</p>|\[|\]','',rules_text)
     rules_texts.append(rules_text)
+    # still have italicized text
+    # consider replacing paragraph breaks with newlines
     
     mana_cost = []
-    for img in container.find('span', class_="manaCost").find_all('img', alt=True):
-        mana_cost.append(img.get('alt'))
-    mana_costs.append(mana_cost)
+    for img in card.find('span', class_="manaCost").find_all('img', alt=True):
+        symbol = img.get('alt')
+        mana_cost.append(mana_symbols_dict.get(symbol,symbol))
+    mana_costs.append(''.join(mana_cost))
     
-    cmc = container.find('span', class_="convertedManaCost").text
+    cmc = int(card.find('span', class_="convertedManaCost").text)
     cmcs.append(cmc)
 
 cards = pd.DataFrame({
