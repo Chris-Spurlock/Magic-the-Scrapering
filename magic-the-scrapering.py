@@ -1,6 +1,12 @@
-# Under Construction
-# Add commentary
+"""
+Under Construction
+Next steps:
+-Add commentary
+-functionize code
+-expand scrape to every card (currently first page of results)
+"""
 
+# import libraries
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -18,20 +24,20 @@ card_types = []
 rules_texts = []
 mana_costs = []
 cmcs = []
+power = []
+toughness = []
+colors = []
 
 mana_symbols_dict = {
-    'White': 'W',
-    'Blue': 'U',
-    'Black': 'B',
-    'Red': 'R',
-    'Green': 'G',
-    'Phyrexian White': 'W/P',
-    'Phyrexian Blue': 'U/P',
-    'Phyrexian Black': 'B/P',
-    'Phyrexian Red': 'R/P',
-    'Phyrexian Green': 'G/P',
+    'White': 'W', 'Blue': 'U', 'Black': 'B', 'Red': 'R', 'Green': 'G',
+    'White or Blue': '(W/U)', 'Blue or Black': '(U/B)', 'Black or Red': '(B/R)', 'Red or Green': '(R/G)', 'Green or White': '(G/W)',
+    'White or Black': '(W/B)', 'Blue or Red': '(U/R)', 'Black or Green': '(B/G)', 'Red or White': '(R/W)', 'Green or Blue': '(G/U)',
+    'Two or White': '(2/W)', 'Two or Blue': '(2/U)', 'Two or Black': '(2/B)', 'Two or Red': '(2/R)', 'Two or Green': '(2/G)',
+    'Phyrexian White': '(W/P)', 'Phyrexian Blue': '(U/P)', 'Phyrexian Black': '(B/P)', 'Phyrexian Red': '(R/P)', 'Phyrexian Green': '(G/P)',
     'Colorless': 'C',
-    'Variable Colorless': 'X'
+    'Variable Colorless': 'X',
+    'Snow': 'S',
+    'Energy': 'E'
     }
 
 cards_tr = html.find_all('tr', class_="cardItem")
@@ -53,10 +59,8 @@ for card in cards_tr:
     for symbol in rules_text_symbols:
         rules_text = re.sub('<img.*?/>',symbol,rules_text,1)
     
-    rules_text = re.sub('<p>|</p>,|</p>|\[|\]','',rules_text)
+    rules_text = re.sub('<p>|</p>,|</p>|<i>|</i>|\[|\]','',rules_text)
     rules_texts.append(rules_text)
-    # still have italicized text
-    # consider replacing paragraph breaks with newlines
     
     mana_cost = []
     for img in card.find('span', class_="manaCost").find_all('img', alt=True):
@@ -67,10 +71,34 @@ for card in cards_tr:
     cmc = int(card.find('span', class_="convertedManaCost").text)
     cmcs.append(cmc)
 
+for i in range(len(card_types)):
+    if 'Creature' in card_types[i]:
+        power_start = card_types[i].rfind('(') + 1
+        power_end = card_types[i].rfind('/')
+        
+        power.append(card_types[i][power_start:power_end])
+        toughness.append(card_types[i][power_end + 1:-1])
+    else:
+        power.append(None)
+        toughness.append(None)
+        
+for i in range(len(mana_costs)):
+    color_str = ''
+    for color in ['W','U','B','R','G']:
+        if color in mana_costs[i]:
+            color_str += color
+    if color_str == '':
+        colors.append(None)
+    else:
+        colors.append(color_str)
+
 cards = pd.DataFrame({
-    "Name": card_names,
-    "Type": card_types,
-    "Rules Text": rules_texts,
-    "Mana Cost": mana_costs,
-    "Converted Mana Cost": cmcs
+    'Name': card_names,
+    'Type': card_types,
+    'Rules Text': rules_texts,
+    'Mana Cost': mana_costs,
+    'Converted Mana Cost': cmcs,
+    'Power': power,
+    'Toughness': toughness,
+    'Color': colors
     })
